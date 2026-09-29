@@ -4,3 +4,4 @@ dist
 .obsidian-cache
 package-lock.json
 *.map
+standby-clock
