@@ -23,6 +23,20 @@ clock appears. Tap the screen or unplug the charger and the clock closes.
 
 ---
 
+## Quickest way: download a ready-made APK
+
+GitHub builds the app automatically whenever its code changes.
+
+1. On GitHub, open this repository's **Actions** tab and select **Standby Clock APK**.
+2. Open the most recent run with a green tick.
+3. Under **Artifacts**, select **standby-clock-apk** to download it. You need to be
+   signed in to GitHub.
+4. Unzip the download to get `standby-clock.apk`. Copy it to your phone and open it,
+   allowing "Install unknown apps" when asked.
+5. Continue with **Part 6: Turn it on** below.
+
+To build the app yourself instead, follow Parts 1–5.
+
 ## Part 1: Install Android Studio (one time, about 20 minutes)
 
 Android Studio is Google's free program for building Android apps. It runs on
