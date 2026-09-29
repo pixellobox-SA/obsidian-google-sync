@@ -57,8 +57,8 @@ fun StandbyScreen(settings: ClockSettings, onDisplayMode: (DisplayMode) -> Unit)
     LaunchedEffect(Unit) { fadeIn.animateTo(1f, tween(1200)) }
 
     // Nudge everything by a few pixels each minute so nothing burns into an OLED panel.
-    val shiftX by animateDpAsState(((now.minute % 5) - 2) * 3.dp, tween(2000), label = "shiftX")
-    val shiftY by animateDpAsState((((now.minute / 5) % 3) - 1) * 3.dp, tween(2000), label = "shiftY")
+    val shiftX by animateDpAsState((((now.minute % 5) - 2) * 3).dp, tween(2000), label = "shiftX")
+    val shiftY by animateDpAsState(((((now.minute / 5) % 3) - 1) * 3).dp, tween(2000), label = "shiftY")
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         // In portrait with "landscape only" on, stay completely black.
