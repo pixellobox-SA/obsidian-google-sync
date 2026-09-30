@@ -1,12 +1,12 @@
 package app.standbyclock
 
+import android.app.Activity
 import android.os.Build
 import android.view.Window
 import android.view.WindowManager
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import app.standbyclock.ui.DisplayMode
 
 /** Edge-to-edge, no status or navigation bars, drawn under the camera cut-out. */
 fun Window.goImmersive() {
@@ -22,13 +22,20 @@ fun Window.goImmersive() {
     }
 }
 
-/** Normal = the phone's own brightness; night and hidden = as dim as the panel allows. */
-fun Window.applyDisplayMode(mode: DisplayMode) {
-    attributes = attributes.apply {
-        screenBrightness = when (mode) {
-            DisplayMode.NORMAL -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-            DisplayMode.NIGHT -> 0.02f
-            DisplayMode.HIDDEN -> 0.01f
-        }
+/**
+ * Show on top of the lock screen (without unlocking it), switch the screen on, and
+ * keep it on at the phone's normal brightness for as long as the clock is open.
+ */
+fun Activity.showOverLockScreen() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+    } else {
+        @Suppress("DEPRECATION")
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+        )
     }
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 }

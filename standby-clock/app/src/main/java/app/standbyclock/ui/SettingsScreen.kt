@@ -1,6 +1,9 @@
 package app.standbyclock.ui
 
 import android.Manifest
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -54,7 +57,13 @@ private val SettingsColors = darkColorScheme(
 )
 
 @Composable
-fun SettingsScreen(onOpenScreenSaverSettings: () -> Unit, onPreview: () -> Unit) {
+fun SettingsScreen(
+    resumeTick: Int,
+    onPreview: () -> Unit,
+    onAllowOverlay: () -> Unit,
+    onAllowBackground: () -> Unit,
+    onAutoStartChanged: () -> Unit,
+) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val scope = rememberCoroutineScope()
@@ -64,9 +73,16 @@ fun SettingsScreen(onOpenScreenSaverSettings: () -> Unit, onPreview: () -> Unit)
     var night by remember { mutableStateOf(prefs.nightMode) }
     var nightStart by remember { mutableStateOf(prefs.nightStartHour) }
     var nightEnd by remember { mutableStateOf(prefs.nightEndHour) }
-    var landscapeOnly by remember { mutableStateOf(prefs.landscapeOnly) }
+    var autoStart by remember { mutableStateOf(prefs.autoStart) }
     var manualPlace by remember { mutableStateOf(prefs.manualPlace) }
     var hasLocation by remember { mutableStateOf(LocationProvider.hasPermission(context)) }
+    // Re-checked every time the user comes back from the system Settings app.
+    val canOverlay = remember(resumeTick) {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || Settings.canDrawOverlays(context)
+    }
+    val canRunInBackground = remember(resumeTick) {
+        context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
+    }
     var weather by remember { mutableStateOf(WeatherRepository.cached(context)) }
     var cityInput by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
@@ -97,24 +113,33 @@ fun SettingsScreen(onOpenScreenSaverSettings: () -> Unit, onPreview: () -> Unit)
         ) {
             Text("Standby Clock", style = MaterialTheme.typography.headlineMedium, color = Color.White)
             Text(
-                "Time and weather while your phone charges on its side.",
+                "Time and weather while your phone charges wirelessly on its side.",
                 color = Color(0xFF9C9CA3),
             )
 
-            Section("Turn it on") {
-                Text(
-                    "1. Select Open screen saver settings.\n" +
-                        "2. Pick Standby clock.\n" +
-                        "3. Under When to start, choose While charging.\n" +
-                        "4. Charge the phone lying on its side.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(Modifier.height(12.dp))
-                Row {
-                    Button(onClick = onOpenScreenSaverSettings) { Text("Open screen saver settings") }
-                    Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = onPreview) { Text("Preview") }
+            Section("Automatic start") {
+                SwitchRow("Open when charging wirelessly on its side", checked = autoStart) {
+                    autoStart = it; prefs.autoStart = it; onAutoStartChanged()
                 }
+                if (autoStart) {
+                    Spacer(Modifier.height(8.dp))
+                    PermissionRow(
+                        done = canOverlay,
+                        doneText = "Can open over the lock screen",
+                        todoText = "Needed to open by itself: allow Display over other apps.",
+                        buttonText = "Allow",
+                        onClick = onAllowOverlay,
+                    )
+                    PermissionRow(
+                        done = canRunInBackground,
+                        doneText = "Allowed to keep watching in the background",
+                        todoText = "Recommended so the phone doesn't stop it: allow background use.",
+                        buttonText = "Allow",
+                        onClick = onAllowBackground,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = onPreview) { Text("Preview") }
             }
 
             Section("Clock") {
@@ -176,22 +201,11 @@ fun SettingsScreen(onOpenScreenSaverSettings: () -> Unit, onPreview: () -> Unit)
             }
 
             Section("Night mode") {
-                SwitchRow("Dim and turn red at night", checked = night) { night = it; prefs.nightMode = it }
+                SwitchRow("Red/amber colours at night", checked = night) { night = it; prefs.nightMode = it }
                 if (night) {
                     HourStepper("Starts at", nightStart) { nightStart = it.mod(24); prefs.nightStartHour = it }
                     HourStepper("Ends at", nightEnd) { nightEnd = it.mod(24); prefs.nightEndHour = it }
                 }
-            }
-
-            Section("Display") {
-                SwitchRow("Only show in landscape", checked = landscapeOnly) {
-                    landscapeOnly = it; prefs.landscapeOnly = it
-                }
-                Text(
-                    "When on, the screen stays black while the phone is upright.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF9C9CA3),
-                )
             }
 
             Text(
@@ -214,6 +228,28 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
             Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
             content()
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(
+    done: Boolean,
+    doneText: String,
+    todoText: String,
+    buttonText: String,
+    onClick: () -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            if (done) "✓ $doneText" else todoText,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (done) Color(0xFF9C9CA3) else Color.White,
+        )
+        if (!done) {
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = onClick) { Text(buttonText) }
         }
     }
 }

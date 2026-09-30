@@ -28,31 +28,21 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import app.standbyclock.data.ClockSettings
 
-/** What the host window should do with screen brightness. */
-enum class DisplayMode { NORMAL, NIGHT, HIDDEN }
-
 /**
  * The whole StandBy screen: a big clock card and a small weather card on pure black.
- * Shared by the screen saver and the in-app preview.
+ * Screen brightness is never touched: night mode only changes the colours.
  */
 @Composable
-fun StandbyScreen(settings: ClockSettings, onDisplayMode: (DisplayMode) -> Unit) {
+fun StandbyScreen(settings: ClockSettings) {
     val now by rememberMinuteClock()
     val weather by rememberWeather()
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val hidden = settings.landscapeOnly && !landscape
     val night = settings.nightMode && isNightHour(now.hour, settings.nightStartHour, settings.nightEndHour)
-    val mode = when {
-        hidden -> DisplayMode.HIDDEN
-        night -> DisplayMode.NIGHT
-        else -> DisplayMode.NORMAL
-    }
-    LaunchedEffect(mode) { onDisplayMode(mode) }
 
     val palette = animatedPalette(night)
 
-    // Gentle fade-in when the screen saver starts.
+    // Gentle fade-in when the clock opens.
     val fadeIn = remember { Animatable(0f) }
     LaunchedEffect(Unit) { fadeIn.animateTo(1f, tween(1200)) }
 
@@ -61,9 +51,6 @@ fun StandbyScreen(settings: ClockSettings, onDisplayMode: (DisplayMode) -> Unit)
     val shiftY by animateDpAsState(((((now.minute / 5) % 3) - 1) * 3).dp, tween(2000), label = "shiftY")
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        // In portrait with "landscape only" on, stay completely black.
-        if (hidden) return@Box
-
         val content = Modifier
             .fillMaxSize()
             .graphicsLayer { alpha = fadeIn.value }

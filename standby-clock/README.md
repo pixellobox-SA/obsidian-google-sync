@@ -1,25 +1,31 @@
 # Standby Clock for Android
 
-A calm bedside and desk clock inspired by iPhone StandBy. While your phone charges
-lying on its side, it shows the time and the current weather on a pure black
-screen. Nothing else.
+A calm bedside and desk clock inspired by iPhone StandBy. Put your phone on a
+wireless charger on its side and it opens by itself, showing the time and the
+current weather on a pure black screen. Nothing else.
 
 - Big, thin clock in Inter, with a 24-hour or 12-hour option
 - Small weather card: temperature, condition icon, high and low, and town name
 - Frosted-glass cards on black, which suits OLED screens
 - Soft fade when the minute changes
-- Night mode: after a set hour the screen dims and turns red/amber
+- Night mode: after a set hour the colours turn red/amber (brightness is never lowered)
 - Free and open. No ads, no tracking, no analytics, no account
 
 ---
 
 ## How it works (in one paragraph)
 
-The app is an Android **screen saver** (Android calls these "Daydreams"; developers
-call them `DreamService`). Android itself starts a screen saver while the phone is
-charging, so the app doesn't need to run in the background. When the phone is
-upright (portrait) the screen stays black. When it's on its side (landscape) the
-clock appears. Tap the screen or unplug the charger and the clock closes.
+A small helper runs quietly in the background and waits. As soon as the phone is
+**charging wirelessly** (cable charging is ignored) **and** standing **on its side**
+(landscape), it switches the screen on and opens the clock, even over the lock
+screen (your phone stays locked). The screen then stays on at your normal
+brightness. Lift the phone off the charger, turn it upright, or tap the screen and
+the clock closes. If you tap it away, it won't reappear until you take the phone
+off the stand and put it back.
+
+It uses the motion sensor to tell "on its side" from "upright" or "lying flat",
+but only while the phone is on the wireless charger. The rest of the time it just
+waits for the charger and uses no noticeable battery.
 
 ---
 
@@ -114,35 +120,38 @@ You only need to do this once. It lets your computer install apps on the phone.
 ## Part 6: Turn it on
 
 1. Open **Standby Clock** from your app list.
-2. Under **Weather**, select **Allow approximate location** and allow it. You can
-   type a city instead if you prefer not to share location.
-3. Select **Open screen saver settings**.
-4. Choose **Standby clock** as the screen saver.
-5. Set **When to start** to **While charging**. (On some phones this is under the
-   three-dot menu, or the options may be named "Daydream".)
-6. Plug the phone in and lay it on its side. When the screen would normally turn off,
+2. Under **Automatic start**, make sure **Open when charging wirelessly on its side**
+   is on.
+3. Next to "allow Display over other apps", select **Allow**. In the list that opens,
+   find **Standby Clock**, turn the switch on, then go back. Without this, Android
+   doesn't let the clock open by itself.
+4. Next to "allow background use", select **Allow** and confirm. This stops the phone
+   from switching the helper off to save battery.
+5. Under **Weather**, select **Allow approximate location**, or type a city instead.
+6. Put the phone on a wireless charger, standing on its side. After about a second
    the clock appears.
 
 Select **Preview** in the app to see the clock at any time. Tap to close it.
 
-> **Samsung phones:** some Samsung versions hide the screen saver menu. The
-> **Open screen saver settings** button usually still opens it. If it doesn't, search
-> for "Screen saver" in the Settings search bar.
+> **Used an earlier version?** It worked as a screen saver. Go to
+> **Settings → Display → Screen saver** and turn it off (or pick a different one),
+> otherwise the old screen saver may still appear while charging.
 
-> **Timing:** Android starts the screen saver when the screen would time out. To
-> make it appear sooner, lower **Settings → Display → Screen timeout**.
+> **Samsung and other phones with strict battery saving:** if the clock stops opening
+> after a while, open **Settings → Apps → Standby Clock → Battery** and choose
+> **Unrestricted**.
 
 ---
 
 ## Settings
 
-| Setting                  | What it does                                                        |
-| ------------------------ | ------------------------------------------------------------------- |
-| 24-hour clock            | Switches between 14:30 and 2:30 PM                                   |
-| Show °F instead of °C    | Temperature units                                                    |
-| Location                 | Approximate location, or a city you type                             |
-| Night mode               | Between the start and end hours the screen dims and turns red/amber  |
-| Only show in landscape   | When on, the screen stays black while the phone is upright           |
+| Setting                                    | What it does                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| Open when charging wirelessly on its side  | Turns automatic start on or off                                       |
+| 24-hour clock                              | Switches between 14:30 and 2:30 PM                                     |
+| Show °F instead of °C                      | Temperature units                                                      |
+| Location                                   | Approximate location, or a city you type                               |
+| Night mode                                 | Between the start and end hours the colours turn red/amber (no dimming) |
 
 Settings apply the next time the clock starts.
 
@@ -168,8 +177,12 @@ Settings apply the next time the clock starts.
   per-second timer.
 - Weather is downloaded at most every 30 minutes. The last result is saved and shown
   straight away next time.
-- The screen is kept on only while the screen saver runs. After that, Android's
-  normal screen timeout applies again.
+- The screen is kept on, at your normal brightness, only while the clock is open.
+  After that, Android's normal screen timeout applies again.
+- The background helper does nothing until wireless charging starts. The motion
+  sensor is used only while the phone is on the wireless charger. Android shows a
+  silent "Standby clock is ready" notification while the helper runs, and you can
+  hide it in the notification settings.
 - To avoid OLED burn-in, the layout moves a few pixels each minute.
 - There are no heavy libraries: only Kotlin, Jetpack Compose and Android's built-in APIs.
 
@@ -183,10 +196,11 @@ Settings apply the next time the clock starts.
 
 ```
 app/src/main/java/app/standbyclock/
-  StandbyDreamService.kt   screen saver (DreamService) + minimal Compose lifecycle
-  PreviewActivity.kt       full-screen preview, tap to close
+  ChargeWatcherService.kt  foreground service: wireless charging + accelerometer → opens
+                           the clock; boot receiver restarts it
+  ClockActivity.kt         full-screen clock over the lock screen, tap to close
   SettingsActivity.kt      launcher activity
-  WindowHelpers.kt         immersive mode, brightness for night mode
+  WindowHelpers.kt         immersive mode, show-over-lock-screen, keep screen on
   data/Prefs.kt            SharedPreferences wrapper
   data/LocationProvider.kt coarse location + reverse geocoding
   data/WeatherRepository.kt Open-Meteo fetch, 30-minute cache, city search

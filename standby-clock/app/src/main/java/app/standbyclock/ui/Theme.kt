@@ -37,8 +37,8 @@ private val Day = Palette(
 
 private val Night = Palette(
     primary = Color(0xFFC8442A),
-    secondary = Color(0xFF8C3020),
-    tertiary = Color(0xFF5C2016),
+    secondary = Color(0xFFA33A25),
+    tertiary = Color(0xFF7E2A1C),
     accent = Color(0xFFC9702A),
     glass = Color(0xFFFF4A2A),
     glassEdge = Color(0xFFFF6A3A),

@@ -11,7 +11,6 @@ data class ClockSettings(
     val nightMode: Boolean,
     val nightStartHour: Int,
     val nightEndHour: Int,
-    val landscapeOnly: Boolean,
 )
 
 /** Tiny wrapper around SharedPreferences. Everything stays on the phone. */
@@ -39,9 +38,10 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_NIGHT_END, 7)
         set(v) = sp.edit().putInt(KEY_NIGHT_END, v.mod(24)).apply()
 
-    var landscapeOnly: Boolean
-        get() = sp.getBoolean(KEY_LANDSCAPE_ONLY, true)
-        set(v) = sp.edit().putBoolean(KEY_LANDSCAPE_ONLY, v).apply()
+    /** Open the clock by itself when charging wirelessly in landscape. */
+    var autoStart: Boolean
+        get() = sp.getBoolean(KEY_AUTO_START, true)
+        set(v) = sp.edit().putBoolean(KEY_AUTO_START, v).apply()
 
     /** A city picked by hand. When set, the phone's location is not used at all. */
     var manualPlace: Place?
@@ -63,7 +63,6 @@ class Prefs(context: Context) {
         nightMode = nightMode,
         nightStartHour = nightStartHour,
         nightEndHour = nightEndHour,
-        landscapeOnly = landscapeOnly,
     )
 
     private fun readPlace(prefix: String): Place? {
@@ -93,7 +92,7 @@ class Prefs(context: Context) {
         const val KEY_NIGHT = "night_mode"
         const val KEY_NIGHT_START = "night_start"
         const val KEY_NIGHT_END = "night_end"
-        const val KEY_LANDSCAPE_ONLY = "landscape_only"
+        const val KEY_AUTO_START = "auto_start"
         const val KEY_WEATHER = "weather_cache"
         val FAHRENHEIT_COUNTRIES = setOf("US", "LR", "MM", "BS", "BZ", "KY", "PW")
     }

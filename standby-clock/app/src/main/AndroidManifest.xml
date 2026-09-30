@@ -6,6 +6,16 @@
     <!-- Approximate (city-level) location only. Precise location is never requested. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Auto-start: watch for wireless charging + landscape, then open the clock. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- "Display over other apps": lets the clock open by itself over the lock screen. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Lets the user exempt the watcher from battery optimisation with one tap. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -23,24 +33,31 @@
             </intent-filter>
         </activity>
 
+        <!-- The clock itself. Its own task so it never drags the settings screen along. -->
         <activity
-            android:name=".PreviewActivity"
+            android:name=".ClockActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape" />
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:taskAffinity="app.standbyclock.clock" />
 
-        <!-- The screen saver. Android starts it by itself while charging or docked. -->
         <service
-            android:name=".StandbyDreamService"
-            android:exported="true"
-            android:label="@string/dream_name"
-            android:permission="android.permission.BIND_DREAM_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.dreams.DreamService" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data
-                android:name="android.service.dream"
-                android:resource="@xml/standby_dream" />
+            android:name=".ChargeWatcherService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Opens a bedside clock when the phone is placed on a wireless charger in landscape." />
         </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
