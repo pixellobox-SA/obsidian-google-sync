@@ -1,6 +1,11 @@
 package app.standbyclock.ui
 
 import android.Manifest
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.RadioButton
+import app.standbyclock.data.BackgroundMode
+import app.standbyclock.data.BackgroundPhoto
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -74,6 +79,7 @@ fun SettingsScreen(
     var nightStart by remember { mutableStateOf(prefs.nightStartHour) }
     var nightEnd by remember { mutableStateOf(prefs.nightEndHour) }
     var autoStart by remember { mutableStateOf(prefs.autoStart) }
+    var background by remember { mutableStateOf(prefs.background) }
     var manualPlace by remember { mutableStateOf(prefs.manualPlace) }
     var hasLocation by remember { mutableStateOf(LocationProvider.hasPermission(context)) }
     // Re-checked every time the user comes back from the system Settings app.
@@ -93,6 +99,22 @@ fun SettingsScreen(
 
     // Opening the app is a good moment to look up location + weather in the foreground.
     LaunchedEffect(Unit) { refreshWeather(force = false) }
+
+    // Android's photo picker: no storage permission needed, only the chosen photo is shared.
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                if (BackgroundPhoto.save(context, uri)) {
+                    prefs.background = BackgroundMode.PHOTO
+                    background = BackgroundMode.PHOTO
+                    message = null
+                } else {
+                    message = "Couldn't use that photo."
+                }
+            }
+        }
+    }
+    fun pickPhoto() = photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -144,6 +166,25 @@ fun SettingsScreen(
 
             Section("Clock") {
                 SwitchRow("24-hour clock", checked = use24h) { use24h = it; prefs.use24h = it }
+            }
+
+            Section("Background") {
+                RadioRow("Phone wallpaper", BackgroundMode.WALLPAPER, background) {
+                    background = BackgroundMode.WALLPAPER; prefs.background = it
+                }
+                RadioRow("A photo", BackgroundMode.PHOTO, background) {
+                    if (BackgroundPhoto.exists(context)) {
+                        background = BackgroundMode.PHOTO; prefs.background = it
+                    } else {
+                        pickPhoto()
+                    }
+                }
+                if (background == BackgroundMode.PHOTO) {
+                    TextButton(onClick = { pickPhoto() }) { Text("Choose another photo") }
+                }
+                RadioRow("Black", BackgroundMode.BLACK, background) {
+                    background = BackgroundMode.BLACK; prefs.background = it
+                }
             }
 
             Section("Weather") {
@@ -229,6 +270,23 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
             Spacer(Modifier.height(8.dp))
             content()
         }
+    }
+}
+
+/** One background option. [onSelect] receives the mode this row stands for. */
+@Composable
+private fun RadioRow(
+    label: String,
+    mode: BackgroundMode,
+    current: BackgroundMode,
+    onSelect: (BackgroundMode) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onSelect(mode) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = mode == current, onClick = { onSelect(mode) })
+        Text(label)
     }
 }
 

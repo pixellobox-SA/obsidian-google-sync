@@ -7,4 +7,10 @@
         <item name="android:statusBarColor">@android:color/black</item>
         <item name="android:navigationBarColor">@android:color/black</item>
     </style>
+
+    <!-- The clock: see-through window so the system draws the phone's wallpaper behind it. -->
+    <style name="Theme.StandbyClock.Clock">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 </resources>

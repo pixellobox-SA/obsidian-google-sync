@@ -2,11 +2,12 @@
 
 A calm bedside and desk clock inspired by iPhone StandBy. Put your phone on a
 wireless charger on its side and it opens by itself, showing the time and the
-current weather on a pure black screen. Nothing else.
+current weather over your wallpaper, StandBy-style. Nothing else.
 
-- Big, thin clock in Inter, with a 24-hour or 12-hour option
-- Small weather card: temperature, condition icon, high and low, and town name
-- Frosted-glass cards on black, which suits OLED screens
+- Big, left-aligned time and date in Inter, with a 24-hour or 12-hour option
+- Two widgets on the right: a working analogue clock and the weather (town, icon,
+  temperature, condition, high and low), on slightly transparent dark panels
+- Your phone's wallpaper behind everything, or a photo you choose, or plain black
 - Soft fade when the minute changes
 - Night mode: after a set hour the colours turn red/amber (brightness is never lowered)
 - Free and open. No ads, no tracking, no analytics, no account
@@ -149,6 +150,7 @@ Select **Preview** in the app to see the clock at any time. Tap to close it.
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | Open when charging wirelessly on its side  | Turns automatic start on or off                                       |
 | 24-hour clock                              | Switches between 14:30 and 2:30 PM                                     |
+| Background                                 | Phone wallpaper, a photo you pick, or black                            |
 | Show °F instead of °C                      | Temperature units                                                      |
 | Location                                   | Approximate location, or a city you type                               |
 | Night mode                                 | Between the start and end hours the colours turn red/amber (no dimming) |
@@ -167,6 +169,9 @@ Settings apply the next time the clock starts.
   name. On most phones this is provided by Google Play Services.
 - **Typed city:** if you type a city, the name is sent to Open-Meteo's geocoding
   service to find its coordinates, and your phone's location isn't used at all.
+- **Background:** the phone wallpaper is drawn by Android itself; the app never reads
+  it. A photo you pick is copied into the app's private storage and never leaves the
+  phone. The photo picker shares only that one photo, so no storage permission is needed.
 - **Location:** approximate location only (`ACCESS_COARSE_LOCATION`). Precise location
   is never requested.
 - Everything else, including settings and the last weather result, stays on the phone.
@@ -204,9 +209,11 @@ app/src/main/java/app/standbyclock/
   data/Prefs.kt            SharedPreferences wrapper
   data/LocationProvider.kt coarse location + reverse geocoding
   data/WeatherRepository.kt Open-Meteo fetch, 30-minute cache, city search
-  ui/StandbyScreen.kt      the clock screen layout
-  ui/Cards.kt              clock card, weather card
-  ui/GlassCard.kt          frosted-glass container
+  data/Background.kt        background mode + saving/loading the picked photo
+  ui/StandbyScreen.kt      the clock screen layout and background
+  ui/Cards.kt              big time and date, analogue clock and weather widgets
+  ui/AnalogClock.kt        analogue clock face drawn on a Canvas
+  ui/Widget.kt             translucent dark widget panel
   ui/WeatherIcon.kt        line-art weather icons drawn on a Canvas
   ui/Theme.kt              Inter font, day/night palettes
   ui/State.kt              minute clock, weather refresh loop

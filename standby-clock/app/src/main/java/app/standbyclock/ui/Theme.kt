@@ -1,6 +1,7 @@
 package app.standbyclock.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,37 +12,43 @@ import androidx.compose.ui.text.font.FontWeight
 import app.standbyclock.R
 
 val Inter = FontFamily(
-    Font(R.font.inter_extralight, FontWeight.ExtraLight),
     Font(R.font.inter_light, FontWeight.Light),
     Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
 )
 
-/** Muted greys and whites plus one accent; night swaps everything to dim red/amber. */
+/** Whites and greys plus one warm accent; night swaps everything to red/amber. */
 data class Palette(
     val primary: Color,
     val secondary: Color,
     val tertiary: Color,
     val accent: Color,
-    val glass: Color,
-    val glassEdge: Color,
+    /** Fill and hairline border of the widgets. */
+    val widget: Color,
+    val widgetEdge: Color,
+    /** How much the background picture is darkened, so text stays readable. */
+    val scrim: Float,
 )
 
 private val Day = Palette(
-    primary = Color(0xFFF2F2F4),
-    secondary = Color(0xFF9C9CA3),
-    tertiary = Color(0xFF5E5E66),
-    accent = Color(0xFF8FB0FF),
-    glass = Color(0xFFFFFFFF),
-    glassEdge = Color(0xFFFFFFFF),
+    primary = Color(0xFFF5F5F7),
+    secondary = Color(0xFFD0D0D6),
+    tertiary = Color(0xFF9A9AA2),
+    accent = Color(0xFFE3C48A),
+    widget = Color(0x73000000),
+    widgetEdge = Color(0x24FFFFFF),
+    scrim = 0.25f,
 )
 
 private val Night = Palette(
-    primary = Color(0xFFC8442A),
-    secondary = Color(0xFFA33A25),
-    tertiary = Color(0xFF7E2A1C),
-    accent = Color(0xFFC9702A),
-    glass = Color(0xFFFF4A2A),
-    glassEdge = Color(0xFFFF6A3A),
+    primary = Color(0xFFE0573A),
+    secondary = Color(0xFFB8492F),
+    tertiary = Color(0xFF8A3522),
+    accent = Color(0xFFE08A3C),
+    widget = Color(0x99000000),
+    widgetEdge = Color(0x2EFF5A3A),
+    scrim = 0.6f,
 )
 
 private val colorAnim = tween<Color>(durationMillis = 2500)
@@ -53,7 +60,8 @@ fun animatedPalette(night: Boolean): Palette {
     val secondary by animateColorAsState(target.secondary, colorAnim, label = "secondary")
     val tertiary by animateColorAsState(target.tertiary, colorAnim, label = "tertiary")
     val accent by animateColorAsState(target.accent, colorAnim, label = "accent")
-    val glass by animateColorAsState(target.glass, colorAnim, label = "glass")
-    val glassEdge by animateColorAsState(target.glassEdge, colorAnim, label = "glassEdge")
-    return Palette(primary, secondary, tertiary, accent, glass, glassEdge)
+    val widget by animateColorAsState(target.widget, colorAnim, label = "widget")
+    val widgetEdge by animateColorAsState(target.widgetEdge, colorAnim, label = "widgetEdge")
+    val scrim by animateFloatAsState(target.scrim, tween(2500), label = "scrim")
+    return Palette(primary, secondary, tertiary, accent, widget, widgetEdge, scrim)
 }

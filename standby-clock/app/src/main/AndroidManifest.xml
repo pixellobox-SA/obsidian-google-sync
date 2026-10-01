@@ -40,7 +40,8 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
-            android:taskAffinity="app.standbyclock.clock" />
+            android:taskAffinity="app.standbyclock.clock"
+            android:theme="@style/Theme.StandbyClock.Clock" />
 
         <service
             android:name=".ChargeWatcherService"

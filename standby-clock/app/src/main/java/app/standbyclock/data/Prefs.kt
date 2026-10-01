@@ -11,6 +11,7 @@ data class ClockSettings(
     val nightMode: Boolean,
     val nightStartHour: Int,
     val nightEndHour: Int,
+    val background: BackgroundMode,
 )
 
 /** Tiny wrapper around SharedPreferences. Everything stays on the phone. */
@@ -43,6 +44,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_AUTO_START, true)
         set(v) = sp.edit().putBoolean(KEY_AUTO_START, v).apply()
 
+    var background: BackgroundMode
+        get() = runCatching { BackgroundMode.valueOf(sp.getString(KEY_BACKGROUND, null)!!) }
+            .getOrDefault(BackgroundMode.WALLPAPER)
+        set(v) = sp.edit().putString(KEY_BACKGROUND, v.name).apply()
+
     /** A city picked by hand. When set, the phone's location is not used at all. */
     var manualPlace: Place?
         get() = readPlace("manual")
@@ -63,6 +69,7 @@ class Prefs(context: Context) {
         nightMode = nightMode,
         nightStartHour = nightStartHour,
         nightEndHour = nightEndHour,
+        background = background,
     )
 
     private fun readPlace(prefix: String): Place? {
@@ -93,6 +100,7 @@ class Prefs(context: Context) {
         const val KEY_NIGHT_START = "night_start"
         const val KEY_NIGHT_END = "night_end"
         const val KEY_AUTO_START = "auto_start"
+        const val KEY_BACKGROUND = "background"
         const val KEY_WEATHER = "weather_cache"
         val FAHRENHEIT_COUNTRIES = setOf("US", "LR", "MM", "BS", "BZ", "KY", "PW")
     }

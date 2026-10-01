@@ -1,45 +1,50 @@
 package app.standbyclock.ui
 
-import android.content.res.Configuration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.standbyclock.data.BackgroundMode
+import app.standbyclock.data.BackgroundPhoto
 import app.standbyclock.data.ClockSettings
 
 /**
- * The whole StandBy screen: a big clock card and a small weather card on pure black.
+ * The StandBy screen: a full-screen background picture, the big time and date on the
+ * left, and an analogue clock widget above a weather widget on the right.
  * Screen brightness is never touched: night mode only changes the colours.
  */
 @Composable
 fun StandbyScreen(settings: ClockSettings) {
     val now by rememberMinuteClock()
     val weather by rememberWeather()
-
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val night = settings.nightMode && isNightHour(now.hour, settings.nightStartHour, settings.nightEndHour)
-
     val palette = animatedPalette(night)
 
     // Gentle fade-in when the clock opens.
@@ -50,45 +55,65 @@ fun StandbyScreen(settings: ClockSettings) {
     val shiftX by animateDpAsState((((now.minute % 5) - 2) * 3).dp, tween(2000), label = "shiftX")
     val shiftY by animateDpAsState(((((now.minute / 5) % 3) - 1) * 3).dp, tween(2000), label = "shiftY")
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        val content = Modifier
-            .fillMaxSize()
-            .graphicsLayer { alpha = fadeIn.value }
-            .offset(shiftX, shiftY)
-            .padding(horizontal = 28.dp, vertical = 24.dp)
+    Box(Modifier.fillMaxSize()) {
+        Background(settings.background, palette)
 
-        AmbientGlow(palette.accent, Modifier.fillMaxSize().graphicsLayer { alpha = fadeIn.value })
+        BoxWithConstraints(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = fadeIn.value }
+                .offset(shiftX, shiftY)
+                .padding(horizontal = 40.dp, vertical = 28.dp),
+        ) {
+            // Two square widgets stacked on the right, together as tall as the screen allows.
+            val gap = 16.dp
+            val widget = minOf((maxHeight - gap) / 2, maxWidth * 0.3f)
 
-        if (landscape) {
-            Row(content, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                ClockCard(now, settings.use24h, palette, Modifier.weight(1.75f).fillMaxHeight())
-                WeatherCard(weather, palette, Modifier.weight(1f).fillMaxHeight())
-            }
-        } else {
-            Column(content, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                ClockCard(now, settings.use24h, palette, Modifier.weight(1.3f).fillMaxWidth())
-                WeatherCard(weather, palette, Modifier.weight(1f).fillMaxWidth())
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                TimeAndDate(now, settings.use24h, palette, Modifier.weight(1f).fillMaxHeight())
+                Spacer(Modifier.width(28.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+                    AnalogClockWidget(palette, Modifier.size(widget))
+                    WeatherWidget(weather, palette, Modifier.size(widget))
+                }
             }
         }
     }
 }
 
-/** Two very faint pools of accent light behind the cards, giving the glass some depth. */
+/** Wallpaper, photo or black, darkened just enough for the text to stay readable. */
 @Composable
-private fun AmbientGlow(accent: Color, modifier: Modifier) {
-    Canvas(modifier) {
-        val w = size.width
-        val h = size.height
-        fun glow(center: Offset, radius: Float, alpha: Float) = drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(accent.copy(alpha = alpha), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
-            radius = radius,
-            center = center,
+private fun Background(mode: BackgroundMode, palette: Palette) {
+    val context = LocalContext.current
+    val photo by produceState<ImageBitmap?>(null, mode) {
+        value = if (mode == BackgroundMode.PHOTO) BackgroundPhoto.load(context) else null
+    }
+
+    when {
+        mode == BackgroundMode.BLACK -> Box(Modifier.fillMaxSize().background(Color.Black))
+        mode == BackgroundMode.PHOTO && photo != null -> Image(
+            bitmap = photo!!,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
         )
-        glow(Offset(w * 0.3f, h * 0.3f), w * 0.42f, 0.09f)
-        glow(Offset(w * 0.85f, h * 0.8f), w * 0.28f, 0.06f)
+        mode == BackgroundMode.PHOTO -> Box(Modifier.fillMaxSize().background(Color.Black))
+        // WALLPAPER: the window is see-through and the system draws the wallpaper behind it.
+        else -> Unit
+    }
+
+    if (mode != BackgroundMode.BLACK) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = palette.scrim)))
+        // Extra shade on the left, behind the big time.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to Color.Black.copy(alpha = 0.35f),
+                        0.6f to Color.Transparent,
+                    ),
+                ),
+        )
     }
 }
