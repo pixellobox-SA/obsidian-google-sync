@@ -234,6 +234,12 @@ fun SettingsScreen(
                 if (background == BackgroundMode.PHOTO) {
                     TextButton(onClick = { pickPhoto() }) { Text("Choose another photo") }
                 }
+                RadioRow("A colour", BackgroundMode.COLOR, background) {
+                    background = BackgroundMode.COLOR; prefs.background = it
+                }
+                if (background == BackgroundMode.COLOR) {
+                    ColorPicker(initial = prefs.backgroundColor, onPicked = { prefs.backgroundColor = it })
+                }
                 RadioRow("Black", BackgroundMode.BLACK, background) {
                     background = BackgroundMode.BLACK; prefs.background = it
                 }
@@ -294,7 +300,7 @@ fun SettingsScreen(
             }
 
             Section("Night mode") {
-                SwitchRow("Red/amber colours at night", checked = night) { night = it; prefs.nightMode = it }
+                SwitchRow("Soft beige colours at night", checked = night) { night = it; prefs.nightMode = it }
                 if (night) {
                     HourStepper("Starts at", nightStart) { nightStart = it.mod(24); prefs.nightStartHour = it }
                     HourStepper("Ends at", nightEnd) { nightEnd = it.mod(24); prefs.nightEndHour = it }
@@ -304,6 +310,14 @@ fun SettingsScreen(
             Text(
                 "No ads, no tracking, no account. Weather comes from Open-Meteo (open-meteo.com); " +
                     "only a rounded location is sent to it.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6E6E76),
+            )
+            val version = remember {
+                runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull()
+            }
+            Text(
+                "Standby Clock ${version.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF6E6E76),
             )

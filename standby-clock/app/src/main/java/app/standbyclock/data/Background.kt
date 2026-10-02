@@ -23,6 +23,9 @@ enum class BackgroundMode {
 
     /** Plain black, best for OLED screens at night. */
     BLACK,
+
+    /** A single colour the user picks on a colour wheel, with its own brightness. */
+    COLOR,
 }
 
 /** Stores and loads the user's chosen background photo. Never leaves the phone. */

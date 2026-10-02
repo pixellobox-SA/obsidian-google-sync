@@ -14,6 +14,7 @@ data class ClockSettings(
     val background: BackgroundMode,
     val userName: String,
     val message: String,
+    val backgroundColor: Int,
 )
 
 /** Tiny wrapper around SharedPreferences. Everything stays on the phone. */
@@ -50,6 +51,11 @@ class Prefs(context: Context) {
         get() = runCatching { BackgroundMode.valueOf(sp.getString(KEY_BACKGROUND, null)!!) }
             .getOrDefault(BackgroundMode.WALLPAPER)
         set(v) = sp.edit().putString(KEY_BACKGROUND, v.name).apply()
+
+    /** Colour for [BackgroundMode.COLOR], as ARGB. Default: deep navy. */
+    var backgroundColor: Int
+        get() = sp.getInt(KEY_BG_COLOR, 0xFF0E1A2B.toInt())
+        set(v) = sp.edit().putInt(KEY_BG_COLOR, v).apply()
 
     /** Shown in the greeting above the time. */
     var userName: String
@@ -106,6 +112,7 @@ class Prefs(context: Context) {
         background = background,
         userName = userName,
         message = message,
+        backgroundColor = backgroundColor,
     )
 
     private fun readPlace(prefix: String): Place? {
@@ -137,6 +144,7 @@ class Prefs(context: Context) {
         const val KEY_NIGHT_END = "night_end"
         const val KEY_AUTO_START = "auto_start"
         const val KEY_BACKGROUND = "background"
+        const val KEY_BG_COLOR = "background_color"
         const val KEY_NAME = "user_name"
         const val KEY_MESSAGE = "message"
         const val KEY_DND = "dnd"

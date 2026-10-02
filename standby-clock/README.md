@@ -1,5 +1,7 @@
 # Standby Clock for Android
 
+Version 0.5
+
 A calm bedside and desk clock inspired by iPhone StandBy. Put your phone on a
 wireless charger on its side and it opens by itself, showing the time and the
 current weather over your wallpaper, StandBy-style. Nothing else.
@@ -7,14 +9,15 @@ current weather over your wallpaper, StandBy-style. Nothing else.
 - Big, left-aligned time and date in Inter, with a 24-hour or 12-hour option
 - Two widgets on the right: a working analogue clock and the weather (town, icon,
   temperature, condition, high and low), on slightly transparent dark panels
-- Your phone's wallpaper behind everything, or a photo you choose, or plain black
+- Your phone's wallpaper behind everything, or a photo you choose, a colour from a
+  colour wheel (with brightness), or plain black
 - Battery percentage with a gently "breathing" charging icon, and a greeting above the
   time (automatic "Good morning", or your own message)
 - Swipe left for this month's **calendar** and your **to-do list**; swipe right for a
   **quote of the week** and six **quick actions** (apps or contacts)
 - Optional **Do Not Disturb** while the clock is up, switched back when you lift the phone
 - Soft fade when the minute changes
-- Night mode: after a set hour the colours turn red/amber (brightness is never lowered)
+- Night mode: after a set hour the colours turn a soft light beige (brightness is never lowered)
 - Free and open. No ads, no tracking, no analytics, no account
 
 ---
@@ -156,14 +159,14 @@ Select **Preview** in the app to see the clock at any time. Use the back gesture
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | Open when charging wirelessly on its side  | Turns automatic start on or off                                       |
 | 24-hour clock                              | Switches between 14:30 and 2:30 PM                                     |
-| Background                                 | Phone wallpaper, a photo you pick, or black                            |
+| Background                                 | Phone wallpaper, a photo, a colour from a colour wheel, or black       |
 | Greeting                                   | Your name, and an optional custom message above the time               |
 | Do Not Disturb                             | Priority mode while the clock is up (needs Do Not Disturb access)      |
 | To-do list                                 | Add, tick and remove items (you can also tick them on the clock)       |
 | Quick actions                              | Six tiles: each opens an app or a contact's card                       |
 | Show °F instead of °C                      | Temperature units                                                      |
 | Location                                   | Approximate location, or a city you type                               |
-| Night mode                                 | Between the start and end hours the colours turn red/amber (no dimming) |
+| Night mode                                 | Between the start and end hours the colours turn soft beige (no dimming) |
 
 Settings apply the next time the clock starts.
 

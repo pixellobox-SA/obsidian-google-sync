@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -73,7 +74,7 @@ fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit) {
     val pager = rememberPagerState(initialPage = 1) { 3 }
 
     Box(Modifier.fillMaxSize()) {
-        Background(settings.background, palette)
+        Background(settings.background, Color(settings.backgroundColor), palette)
 
         HorizontalPager(
             state = pager,
@@ -112,9 +113,9 @@ private fun PageDots(current: Int, count: Int, palette: Palette, modifier: Modif
     }
 }
 
-/** Wallpaper, photo or black, darkened just enough for the text to stay readable. */
+/** Wallpaper, photo, colour or black, darkened just enough for the text to stay readable. */
 @Composable
-private fun Background(mode: BackgroundMode, palette: Palette) {
+private fun Background(mode: BackgroundMode, color: Color, palette: Palette) {
     val context = LocalContext.current
     val photo by produceState<ImageBitmap?>(null, mode) {
         value = if (mode == BackgroundMode.PHOTO) BackgroundPhoto.load(context) else null
@@ -122,6 +123,12 @@ private fun Background(mode: BackgroundMode, palette: Palette) {
 
     when {
         mode == BackgroundMode.BLACK -> Box(Modifier.fillMaxSize().background(Color.Black))
+        // A soft top-to-bottom fade of the chosen colour gives it a little depth.
+        mode == BackgroundMode.COLOR -> Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(listOf(color, lerp(color, Color.Black, 0.35f))),
+            ),
+        )
         mode == BackgroundMode.PHOTO && photo != null -> Image(
             bitmap = photo!!,
             contentDescription = null,
@@ -134,7 +141,9 @@ private fun Background(mode: BackgroundMode, palette: Palette) {
     }
 
     if (mode != BackgroundMode.BLACK) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = palette.scrim)))
+        // A chosen colour already has the brightness the user wants, so darken it less.
+        val scrim = if (mode == BackgroundMode.COLOR) palette.scrim * 0.5f else palette.scrim
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim)))
         // Extra shade on the left, behind the big time.
         Box(
             Modifier

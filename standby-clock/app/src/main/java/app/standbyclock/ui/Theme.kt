@@ -18,7 +18,7 @@ val Inter = FontFamily(
     Font(R.font.inter_semibold, FontWeight.SemiBold),
 )
 
-/** Whites and greys plus one warm accent; night swaps everything to red/amber. */
+/** Whites and greys plus one warm accent; night swaps everything to a soft, light beige. */
 data class Palette(
     val primary: Color,
     val secondary: Color,
@@ -42,12 +42,12 @@ private val Day = Palette(
 )
 
 private val Night = Palette(
-    primary = Color(0xFFE0573A),
-    secondary = Color(0xFFB8492F),
-    tertiary = Color(0xFF8A3522),
-    accent = Color(0xFFE08A3C),
+    primary = Color(0xFFEDE3C4),
+    secondary = Color(0xFFCFC3A0),
+    tertiary = Color(0xFF948A6E),
+    accent = Color(0xFFE9D9A6),
     widget = Color(0x99000000),
-    widgetEdge = Color(0x2EFF5A3A),
+    widgetEdge = Color(0x2EEDE3C4),
     scrim = 0.6f,
 )
 
