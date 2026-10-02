@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Standby Clock APK
+# Builds the Android app in standby-clock/ and uploads the installable APK
+# as a downloadable artifact on the workflow run.
+on:
+    pull_request:
+        paths: ["standby-clock/**", ".github/workflows/android-apk.yml"]
+    push:
+        branches: [main]
+        paths: ["standby-clock/**", ".github/workflows/android-apk.yml"]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: standby-clock
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "17"
+            - uses: gradle/actions/setup-gradle@v4
+            - run: ./gradlew --no-daemon assembleRelease
+            - run: cp app/build/outputs/apk/release/app-release.apk standby-clock.apk
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: standby-clock-apk
+                  path: standby-clock/standby-clock.apk
+                  if-no-files-found: error

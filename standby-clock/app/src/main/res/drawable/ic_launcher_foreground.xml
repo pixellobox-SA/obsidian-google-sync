@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A thin clock face: white ring, white hour hand, soft-blue minute hand. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,31 a23,23 0 1,1 0,46 a23,23 0 1,1 0,-46"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFF2F2F4" />
+    <path
+        android:pathData="M54,54 L54,40"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.6"
+        android:strokeColor="#FFF2F2F4" />
+    <path
+        android:pathData="M54,54 L66,60"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FF8FB0FF" />
+</vector>
