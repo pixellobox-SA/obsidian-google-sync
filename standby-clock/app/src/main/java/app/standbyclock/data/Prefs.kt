@@ -12,6 +12,8 @@ data class ClockSettings(
     val nightStartHour: Int,
     val nightEndHour: Int,
     val background: BackgroundMode,
+    val userName: String,
+    val message: String,
 )
 
 /** Tiny wrapper around SharedPreferences. Everything stays on the phone. */
@@ -49,6 +51,38 @@ class Prefs(context: Context) {
             .getOrDefault(BackgroundMode.WALLPAPER)
         set(v) = sp.edit().putString(KEY_BACKGROUND, v.name).apply()
 
+    /** Shown in the greeting above the time. */
+    var userName: String
+        get() = sp.getString(KEY_NAME, "") ?: ""
+        set(v) = sp.edit().putString(KEY_NAME, v.trim()).apply()
+
+    /** Custom line above the time; empty means an automatic "Good morning" style greeting. */
+    var message: String
+        get() = sp.getString(KEY_MESSAGE, "") ?: ""
+        set(v) = sp.edit().putString(KEY_MESSAGE, v.trim()).apply()
+
+    /** Turn on Do Not Disturb while the clock is up. */
+    var dnd: Boolean
+        get() = sp.getBoolean(KEY_DND, false)
+        set(v) = sp.edit().putBoolean(KEY_DND, v).apply()
+
+    /** True while we are the ones holding Do Not Disturb on; [dndPrevious] is what to restore. */
+    var dndActive: Boolean
+        get() = sp.getBoolean(KEY_DND_ACTIVE, false)
+        set(v) = sp.edit().putBoolean(KEY_DND_ACTIVE, v).apply()
+
+    var dndPrevious: Int
+        get() = sp.getInt(KEY_DND_PREVIOUS, 1)
+        set(v) = sp.edit().putInt(KEY_DND_PREVIOUS, v).apply()
+
+    var todosJson: String?
+        get() = sp.getString(KEY_TODOS, null)
+        set(v) = sp.edit().putString(KEY_TODOS, v).apply()
+
+    var shortcutsJson: String?
+        get() = sp.getString(KEY_SHORTCUTS, null)
+        set(v) = sp.edit().putString(KEY_SHORTCUTS, v).apply()
+
     /** A city picked by hand. When set, the phone's location is not used at all. */
     var manualPlace: Place?
         get() = readPlace("manual")
@@ -70,6 +104,8 @@ class Prefs(context: Context) {
         nightStartHour = nightStartHour,
         nightEndHour = nightEndHour,
         background = background,
+        userName = userName,
+        message = message,
     )
 
     private fun readPlace(prefix: String): Place? {
@@ -101,6 +137,13 @@ class Prefs(context: Context) {
         const val KEY_NIGHT_END = "night_end"
         const val KEY_AUTO_START = "auto_start"
         const val KEY_BACKGROUND = "background"
+        const val KEY_NAME = "user_name"
+        const val KEY_MESSAGE = "message"
+        const val KEY_DND = "dnd"
+        const val KEY_DND_ACTIVE = "dnd_active"
+        const val KEY_DND_PREVIOUS = "dnd_previous"
+        const val KEY_TODOS = "todos"
+        const val KEY_SHORTCUTS = "shortcuts"
         const val KEY_WEATHER = "weather_cache"
         val FAHRENHEIT_COUNTRIES = setOf("US", "LR", "MM", "BS", "BZ", "KY", "PW")
     }

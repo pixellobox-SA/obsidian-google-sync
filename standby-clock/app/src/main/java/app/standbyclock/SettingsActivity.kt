@@ -32,6 +32,7 @@ class SettingsActivity : ComponentActivity() {
                     )
                 },
                 onAutoStartChanged = { ChargeWatcherService.sync(this) },
+                onAllowDnd = { open(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)) },
             )
         }
     }

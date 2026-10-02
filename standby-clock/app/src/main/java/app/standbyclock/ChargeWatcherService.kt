@@ -21,6 +21,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import app.standbyclock.data.Dnd
 import app.standbyclock.data.Prefs
 import kotlin.math.abs
 
@@ -85,6 +86,8 @@ class ChargeWatcherService : Service(), SensorEventListener {
         } else {
             stopSensing()
             closeClock()
+            // Off the charger: put Do Not Disturb back the way the user had it.
+            Dnd.restore(this)
         }
     }
 
@@ -143,7 +146,9 @@ class ChargeWatcherService : Service(), SensorEventListener {
         // Android 10+ only lets background apps open screens with "Display over other apps".
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !Settings.canDrawOverlays(this)) return
         startActivity(
-            Intent(this, ClockActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            Intent(this, ClockActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(ClockActivity.EXTRA_AUTO, true),
         )
     }
 

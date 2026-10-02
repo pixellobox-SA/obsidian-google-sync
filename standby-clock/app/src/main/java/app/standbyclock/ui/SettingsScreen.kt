@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.standbyclock.data.Dnd
 import app.standbyclock.data.LocationProvider
 import app.standbyclock.data.Prefs
 import app.standbyclock.data.WeatherRepository
@@ -68,6 +69,7 @@ fun SettingsScreen(
     onAllowOverlay: () -> Unit,
     onAllowBackground: () -> Unit,
     onAutoStartChanged: () -> Unit,
+    onAllowDnd: () -> Unit,
 ) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
@@ -80,6 +82,10 @@ fun SettingsScreen(
     var nightEnd by remember { mutableStateOf(prefs.nightEndHour) }
     var autoStart by remember { mutableStateOf(prefs.autoStart) }
     var background by remember { mutableStateOf(prefs.background) }
+    var userName by remember { mutableStateOf(prefs.userName) }
+    var greeting by remember { mutableStateOf(prefs.message) }
+    var dnd by remember { mutableStateOf(prefs.dnd) }
+    val hasDndAccess = remember(resumeTick) { Dnd.hasAccess(context) }
     var manualPlace by remember { mutableStateOf(prefs.manualPlace) }
     var hasLocation by remember { mutableStateOf(LocationProvider.hasPermission(context)) }
     // Re-checked every time the user comes back from the system Settings app.
@@ -135,7 +141,7 @@ fun SettingsScreen(
         ) {
             Text("Standby Clock", style = MaterialTheme.typography.headlineMedium, color = Color.White)
             Text(
-                "Time and weather while your phone charges wirelessly on its side.",
+                "Time, weather, calendar and more while your phone charges wirelessly on its side.",
                 color = Color(0xFF9C9CA3),
             )
 
@@ -163,6 +169,52 @@ fun SettingsScreen(
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(onClick = onPreview) { Text("Preview") }
             }
+
+            Section("Greeting") {
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it; prefs.userName = it },
+                    label = { Text("Your name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = greeting,
+                    onValueChange = { greeting = it; prefs.message = it },
+                    label = { Text("Message above the time (optional)") },
+                    placeholder = { Text("Hello ${userName.ifBlank { "there" }}, time for work!") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    "Leave the message empty for an automatic \"Good morning\" / \"Good evening\".",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF9C9CA3),
+                )
+            }
+
+            Section("Do Not Disturb") {
+                SwitchRow("Turn on while the clock is showing", checked = dnd) { dnd = it; prefs.dnd = it }
+                if (dnd) {
+                    PermissionRow(
+                        done = hasDndAccess,
+                        doneText = "Allowed to change Do Not Disturb",
+                        todoText = "Needed: allow Do Not Disturb access for Standby Clock.",
+                        buttonText = "Allow",
+                        onClick = onAllowDnd,
+                    )
+                    Text(
+                        "Uses Priority mode, so alarms still ring. Switched back off when you lift the phone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF9C9CA3),
+                    )
+                }
+            }
+
+            Section("To-do list") { TodoEditor() }
+
+            Section("Quick actions") { ShortcutsEditor() }
 
             Section("Clock") {
                 SwitchRow("24-hour clock", checked = use24h) { use24h = it; prefs.use24h = it }
@@ -256,76 +308,5 @@ fun SettingsScreen(
                 color = Color(0xFF6E6E76),
             )
         }
-    }
-}
-
-@Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(8.dp))
-            content()
-        }
-    }
-}
-
-/** One background option. [onSelect] receives the mode this row stands for. */
-@Composable
-private fun RadioRow(
-    label: String,
-    mode: BackgroundMode,
-    current: BackgroundMode,
-    onSelect: (BackgroundMode) -> Unit,
-) {
-    Row(
-        Modifier.fillMaxWidth().clickable { onSelect(mode) },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = mode == current, onClick = { onSelect(mode) })
-        Text(label)
-    }
-}
-
-@Composable
-private fun PermissionRow(
-    done: Boolean,
-    doneText: String,
-    todoText: String,
-    buttonText: String,
-    onClick: () -> Unit,
-) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            if (done) "✓ $doneText" else todoText,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (done) Color(0xFF9C9CA3) else Color.White,
-        )
-        if (!done) {
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = onClick) { Text(buttonText) }
-        }
-    }
-}
-
-@Composable
-private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = onChange)
-    }
-}
-
-@Composable
-private fun HourStepper(label: String, hour: Int, onChange: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f))
-        TextButton(onClick = { onChange(hour - 1) }) { Text("−") }
-        Text("%02d:00".format(hour))
-        TextButton(onClick = { onChange(hour + 1) }) { Text("+") }
     }
 }

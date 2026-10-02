@@ -8,6 +8,11 @@ current weather over your wallpaper, StandBy-style. Nothing else.
 - Two widgets on the right: a working analogue clock and the weather (town, icon,
   temperature, condition, high and low), on slightly transparent dark panels
 - Your phone's wallpaper behind everything, or a photo you choose, or plain black
+- Battery percentage with a gently "breathing" charging icon, and a greeting above the
+  time (automatic "Good morning", or your own message)
+- Swipe left for this month's **calendar** and your **to-do list**; swipe right for a
+  **quote of the week** and six **quick actions** (apps or contacts)
+- Optional **Do Not Disturb** while the clock is up, switched back when you lift the phone
 - Soft fade when the minute changes
 - Night mode: after a set hour the colours turn red/amber (brightness is never lowered)
 - Free and open. No ads, no tracking, no analytics, no account
@@ -20,9 +25,10 @@ A small helper runs quietly in the background and waits. As soon as the phone is
 **charging wirelessly** (cable charging is ignored) **and** standing **on its side**
 (landscape), it switches the screen on and opens the clock, even over the lock
 screen (your phone stays locked). The screen then stays on at your normal
-brightness. Lift the phone off the charger, turn it upright, or tap the screen and
-the clock closes. If you tap it away, it won't reappear until you take the phone
-off the stand and put it back.
+brightness. Swipe left or right for the other pages. Lift the phone off the charger
+or turn it upright and the clock closes. You can also close it with the back
+gesture; it then won't reappear until you take the phone off the stand and put it
+back.
 
 It uses the motion sensor to tell "on its side" from "upright" or "lying flat",
 but only while the phone is on the wireless charger. The rest of the time it just
@@ -132,7 +138,7 @@ You only need to do this once. It lets your computer install apps on the phone.
 6. Put the phone on a wireless charger, standing on its side. After about a second
    the clock appears.
 
-Select **Preview** in the app to see the clock at any time. Tap to close it.
+Select **Preview** in the app to see the clock at any time. Use the back gesture to close it.
 
 > **Used an earlier version?** It worked as a screen saver. Go to
 > **Settings → Display → Screen saver** and turn it off (or pick a different one),
@@ -151,6 +157,10 @@ Select **Preview** in the app to see the clock at any time. Tap to close it.
 | Open when charging wirelessly on its side  | Turns automatic start on or off                                       |
 | 24-hour clock                              | Switches between 14:30 and 2:30 PM                                     |
 | Background                                 | Phone wallpaper, a photo you pick, or black                            |
+| Greeting                                   | Your name, and an optional custom message above the time               |
+| Do Not Disturb                             | Priority mode while the clock is up (needs Do Not Disturb access)      |
+| To-do list                                 | Add, tick and remove items (you can also tick them on the clock)       |
+| Quick actions                              | Six tiles: each opens an app or a contact's card                       |
 | Show °F instead of °C                      | Temperature units                                                      |
 | Location                                   | Approximate location, or a city you type                               |
 | Night mode                                 | Between the start and end hours the colours turn red/amber (no dimming) |
@@ -172,6 +182,10 @@ Settings apply the next time the clock starts.
 - **Background:** the phone wallpaper is drawn by Android itself; the app never reads
   it. A photo you pick is copied into the app's private storage and never leaves the
   phone. The photo picker shares only that one photo, so no storage permission is needed.
+- **Contacts:** quick-action contacts are chosen with Android's contact picker, which
+  shares only that one contact. The app has no access to your address book.
+- **Quotes, calendar, to-do list and battery** all come from the phone itself; nothing is
+  downloaded for them. Quotes are built into the app and change every Monday.
 - **Location:** approximate location only (`ACCESS_COARSE_LOCATION`). Precise location
   is never requested.
 - Everything else, including settings and the last weather result, stays on the phone.
@@ -210,7 +224,13 @@ app/src/main/java/app/standbyclock/
   data/LocationProvider.kt coarse location + reverse geocoding
   data/WeatherRepository.kt Open-Meteo fetch, 30-minute cache, city search
   data/Background.kt        background mode + saving/loading the picked photo
-  ui/StandbyScreen.kt      the clock screen layout and background
+  ui/StandbyScreen.kt      background, three-page pager and page dots
+  ui/MainPage.kt           battery, greeting, time/date, widgets, day/night toggle
+  ui/CalendarPage.kt       month calendar and to-do widgets
+  ui/QuotePage.kt          quote of the week and quick-action tiles
+  ui/SmallIcons.kt         breathing battery icon, moon toggle
+  ui/SettingsLists.kt      to-do and quick-action editors
+  data/Todos.kt, data/Shortcuts.kt, data/Quotes.kt, data/Dnd.kt
   ui/Cards.kt              big time and date, analogue clock and weather widgets
   ui/AnalogClock.kt        analogue clock face drawn on a Canvas
   ui/Widget.kt             translucent dark widget panel

@@ -7,16 +7,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import app.standbyclock.data.Quotes
+import app.standbyclock.data.Shortcut
+import app.standbyclock.data.Shortcuts
+import app.standbyclock.data.Todos
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,16 +41,26 @@ import app.standbyclock.data.BackgroundPhoto
 import app.standbyclock.data.ClockSettings
 
 /**
- * The StandBy screen: a full-screen background picture, the big time and date on the
- * left, and an analogue clock widget above a weather widget on the right.
- * Screen brightness is never touched: night mode only changes the colours.
+ * The StandBy screen: a full-screen background with three swipeable pages on top:
+ * calendar + to-do (left), the clock (middle, shown first) and quote + quick actions
+ * (right). Pages that aren't on screen aren't drawn. Screen brightness is never touched.
  */
 @Composable
-fun StandbyScreen(settings: ClockSettings) {
+fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit) {
+    val context = LocalContext.current
     val now by rememberMinuteClock()
     val weather by rememberWeather()
-    val night = settings.nightMode && isNightHour(now.hour, settings.nightStartHour, settings.nightEndHour)
+
+    // Night colours follow the schedule until the moon button is tapped.
+    var nightOverride by remember { mutableStateOf<Boolean?>(null) }
+    val scheduledNight = settings.nightMode && isNightHour(now.hour, settings.nightStartHour, settings.nightEndHour)
+    val night = nightOverride ?: scheduledNight
     val palette = animatedPalette(night)
+
+    var todos by remember { mutableStateOf(Todos.load(context)) }
+    val shortcuts = remember { Shortcuts.load(context) }
+    val today = now.toLocalDate()
+    val quote = remember(today) { Quotes.ofTheWeek(today) }
 
     // Gentle fade-in when the clock opens.
     val fadeIn = remember { Animatable(0f) }
@@ -55,28 +70,44 @@ fun StandbyScreen(settings: ClockSettings) {
     val shiftX by animateDpAsState((((now.minute % 5) - 2) * 3).dp, tween(2000), label = "shiftX")
     val shiftY by animateDpAsState(((((now.minute / 5) % 3) - 1) * 3).dp, tween(2000), label = "shiftY")
 
+    val pager = rememberPagerState(initialPage = 1) { 3 }
+
     Box(Modifier.fillMaxSize()) {
         Background(settings.background, palette)
 
-        BoxWithConstraints(
-            Modifier
+        HorizontalPager(
+            state = pager,
+            modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = fadeIn.value }
-                .offset(shiftX, shiftY)
-                .padding(horizontal = 40.dp, vertical = 28.dp),
-        ) {
-            // Two square widgets stacked on the right, together as tall as the screen allows.
-            val gap = 16.dp
-            val widget = minOf((maxHeight - gap) / 2, maxWidth * 0.3f)
-
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                TimeAndDate(now, settings.use24h, palette, Modifier.weight(1f).fillMaxHeight())
-                Spacer(Modifier.width(28.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-                    AnalogClockWidget(palette, Modifier.size(widget))
-                    WeatherWidget(weather, palette, Modifier.size(widget))
+                .offset(shiftX, shiftY),
+        ) { page ->
+            Box(Modifier.fillMaxSize().padding(horizontal = 40.dp, vertical = 28.dp)) {
+                when (page) {
+                    0 -> CalendarPage(today, todos, palette) { i ->
+                        todos = todos.toMutableList().also { it[i] = it[i].copy(done = !it[i].done) }
+                        Todos.save(context, todos)
+                    }
+                    1 -> MainPage(now, weather, settings, palette, night) { nightOverride = !night }
+                    else -> QuotePage(quote, shortcuts, palette, onLaunch)
                 }
             }
+        }
+
+        PageDots(pager.currentPage, 3, palette, Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp))
+    }
+}
+
+@Composable
+private fun PageDots(current: Int, count: Int, palette: Palette, modifier: Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        repeat(count) { i ->
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(if (i == current) palette.primary else palette.tertiary.copy(alpha = 0.6f)),
+            )
         }
     }
 }

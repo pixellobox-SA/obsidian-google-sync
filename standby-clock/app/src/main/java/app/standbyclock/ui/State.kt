@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.BatteryManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +59,35 @@ fun rememberWeather(): State<Weather?> {
         }
     }
     return weather
+}
+
+data class BatteryInfo(val percent: Int, val charging: Boolean)
+
+/** Battery level from the system's own battery broadcast; it only fires when something changes. */
+@Composable
+fun rememberBattery(): State<BatteryInfo?> {
+    val context = LocalContext.current
+    val battery = remember { mutableStateOf<BatteryInfo?>(null) }
+    DisposableEffect(context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) {
+                val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+                val status = i.getIntExtra(BatteryManager.EXTRA_STATUS, 0)
+                if (level >= 0 && scale > 0) {
+                    battery.value = BatteryInfo(
+                        percent = level * 100 / scale,
+                        charging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            status == BatteryManager.BATTERY_STATUS_FULL,
+                    )
+                }
+            }
+        }
+        // Sticky broadcast: the current value is delivered straight away.
+        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        onDispose { context.unregisterReceiver(receiver) }
+    }
+    return battery
 }
 
 /** True when [hour] falls inside the night window, which may wrap past midnight. */
