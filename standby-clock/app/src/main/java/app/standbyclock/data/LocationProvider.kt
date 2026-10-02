@@ -43,26 +43,50 @@ object LocationProvider {
         return Place(name = placeName(context, lat, lon) ?: "", lat = lat, lon = lon)
     }
 
+    /** False when the user has switched Location off in quick settings. */
+    fun isLocationOn(context: Context): Boolean {
+        val lm = context.getSystemService(LocationManager::class.java) ?: return false
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            lm.isLocationEnabled
+        } else {
+            providers(lm).any { runCatching { lm.isProviderEnabled(it) }.getOrDefault(false) }
+        }
+    }
+
+    /**
+     * Location sources to try, best first. "Fused" (Android 12+) is what most phones use
+     * today; GPS is only usable with approximate permission from Android 12 on, where the
+     * system blurs it to about 2 km for us.
+     */
+    private fun providers(lm: LocationManager): List<String> = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
+        add(LocationManager.NETWORK_PROVIDER)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.GPS_PROVIDER)
+    }.filter { p -> runCatching { lm.allProviders.contains(p) && lm.isProviderEnabled(p) }.getOrDefault(false) }
+
     @SuppressLint("MissingPermission")
     private suspend fun fresh(context: Context, lm: LocationManager): Location? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
-        if (!lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return null
-        return withTimeoutOrNull(10_000) {
-            suspendCancellableCoroutine<Location?> { cont ->
-                val signal = CancellationSignal()
-                cont.invokeOnCancellation { signal.cancel() }
-                lm.getCurrentLocation(
-                    LocationManager.NETWORK_PROVIDER,
-                    signal,
-                    context.mainExecutor,
-                ) { loc -> if (cont.isActive) cont.resume(loc) }
+        for (provider in providers(lm)) {
+            val loc = withTimeoutOrNull(10_000) {
+                suspendCancellableCoroutine<Location?> { cont ->
+                    val signal = CancellationSignal()
+                    cont.invokeOnCancellation { signal.cancel() }
+                    runCatching {
+                        lm.getCurrentLocation(provider, signal, context.mainExecutor) { loc ->
+                            if (cont.isActive) cont.resume(loc)
+                        }
+                    }.onFailure { if (cont.isActive) cont.resume(null) }
+                }
             }
+            if (loc != null) return loc
         }
+        return null
     }
 
     @SuppressLint("MissingPermission")
     private fun lastKnown(lm: LocationManager): Location? =
-        listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+        (providers(lm) + LocationManager.PASSIVE_PROVIDER)
             .mapNotNull { runCatching { lm.getLastKnownLocation(it) }.getOrNull() }
             .maxByOrNull { it.time }
 

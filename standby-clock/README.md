@@ -1,6 +1,6 @@
 # Standby Clock for Android
 
-Version 0.5
+Version 0.6
 
 A calm bedside and desk clock inspired by iPhone StandBy. Put your phone on a
 wireless charger on its side and it opens by itself, showing the time and the
@@ -16,8 +16,11 @@ current weather over your wallpaper, StandBy-style. Nothing else.
 - Swipe left for this month's **calendar** and your **to-do list**; swipe right for a
   **quote of the week** and six **quick actions** (apps or contacts)
 - Optional **Do Not Disturb** while the clock is up, switched back when you lift the phone
+- Tap the time to open your phone's own clock app (alarms, timers)
 - Soft fade when the minute changes
-- Night mode: after a set hour the colours turn a soft light beige (brightness is never lowered)
+- Night mode: after a set hour the colours change to your night colour (dark orange to
+  white, soft beige by default); brightness is never lowered
+- Choose your own text and clock colour, and show or hide the analogue clock
 - Free and open. No ads, no tracking, no analytics, no account
 
 ---
@@ -159,6 +162,8 @@ Select **Preview** in the app to see the clock at any time. Use the back gesture
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | Open when charging wirelessly on its side  | Turns automatic start on or off                                       |
 | 24-hour clock                              | Switches between 14:30 and 2:30 PM                                     |
+| Show analogue clock                        | Show or hide the analogue clock widget                                 |
+| Text and clock colour                      | Your own colour (colour wheel + brightness) for text, hands and borders |
 | Background                                 | Phone wallpaper, a photo, a colour from a colour wheel, or black       |
 | Greeting                                   | Your name, and an optional custom message above the time               |
 | Do Not Disturb                             | Priority mode while the clock is up (needs Do Not Disturb access)      |
@@ -166,7 +171,8 @@ Select **Preview** in the app to see the clock at any time. Use the back gesture
 | Quick actions                              | Six tiles: each opens an app or a contact's card                       |
 | Show °F instead of °C                      | Temperature units                                                      |
 | Location                                   | Approximate location, or a city you type                               |
-| Night mode                                 | Between the start and end hours the colours turn soft beige (no dimming) |
+| Night mode                                 | Between the start and end hours the colours change (no dimming)        |
+| Night colour                               | Slider from dark orange through soft beige to white                    |
 
 Settings apply the next time the clock starts.
 

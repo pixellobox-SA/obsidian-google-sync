@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.content.ContextCompat
@@ -49,13 +50,22 @@ class ClockActivity : ComponentActivity() {
 
         val settings = Prefs(this).snapshot()
         setContent {
-            StandbyScreen(settings, onLaunch = ::launch)
+            StandbyScreen(settings, onLaunch = ::launch, onOpenClock = ::openClockApp)
         }
     }
 
-    /** Opens a quick action. If the phone is locked, asks the user to unlock first. */
+    /** Opens a quick action. */
     private fun launch(shortcut: Shortcut) {
-        val target = Shortcuts.intentFor(this, shortcut) ?: return
+        Shortcuts.intentFor(this, shortcut)?.let(::openOverLock)
+    }
+
+    /** Opens the phone's own clock app (its alarms screen), whichever app that is. */
+    private fun openClockApp() {
+        openOverLock(Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /** Starts [target]; if the phone is locked, asks the user to unlock first. */
+    private fun openOverLock(target: Intent) {
         val keyguard = getSystemService(KeyguardManager::class.java)
         if (keyguard.isKeyguardLocked) {
             keyguard.requestDismissKeyguard(

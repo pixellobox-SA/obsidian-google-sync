@@ -3,7 +3,10 @@ package app.standbyclock.ui
 import android.text.format.DateFormat
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +47,7 @@ fun MainPage(
     settings: ClockSettings,
     palette: Palette,
     night: Boolean,
+    onOpenClock: () -> Unit,
     onToggleNight: () -> Unit,
 ) {
     val battery by rememberBattery()
@@ -77,7 +81,16 @@ fun MainPage(
                         overflow = TextOverflow.Ellipsis,
                         style = label(small * 1.1f, palette.primary, FontWeight.Medium),
                     )
-                    BigTime(now, settings.use24h, palette, digits)
+                    // Tap the time to open the phone's own clock app (alarms, timers).
+                    Box(
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onOpenClock,
+                        ),
+                    ) {
+                        BigTime(now, settings.use24h, palette, digits)
+                    }
                     BasicText(
                         text = now.format(rememberDateFormat()),
                         maxLines = 1,
@@ -95,7 +108,7 @@ fun MainPage(
             }
             Spacer(Modifier.width(28.dp))
             Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-                AnalogClockWidget(palette, Modifier.size(widget))
+                if (settings.showAnalog) AnalogClockWidget(palette, Modifier.size(widget))
                 WeatherWidget(weather, palette, Modifier.size(widget))
             }
         }

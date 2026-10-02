@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +32,7 @@ data class Palette(
     val scrim: Float,
 )
 
-private val Day = Palette(
+private val DayDefault = Palette(
     primary = Color(0xFFF5F5F7),
     secondary = Color(0xFFD0D0D6),
     tertiary = Color(0xFF9A9AA2),
@@ -41,7 +42,7 @@ private val Day = Palette(
     scrim = 0.25f,
 )
 
-private val Night = Palette(
+private val NightBase = Palette(
     primary = Color(0xFFEDE3C4),
     secondary = Color(0xFFCFC3A0),
     tertiary = Color(0xFF948A6E),
@@ -53,9 +54,32 @@ private val Night = Palette(
 
 private val colorAnim = tween<Color>(durationMillis = 2500)
 
+/**
+ * Night colour from a 0..1 slider: dark orange → soft beige (middle, the default) → white.
+ */
+fun nightColor(tone: Float): Color {
+    val orange = Color(0xFFD9581F)
+    val beige = Color(0xFFEDE3C4)
+    val t = tone.coerceIn(0f, 1f)
+    return if (t < 0.5f) lerp(orange, beige, t * 2f) else lerp(beige, Color.White, (t - 0.5f) * 2f)
+}
+
+/** Builds a full palette from one colour: text, clock hands, icons and borders all follow it. */
+private fun derive(c: Color, base: Palette) = base.copy(
+    primary = c,
+    secondary = lerp(c, Color.Black, 0.18f),
+    tertiary = lerp(c, Color.Black, 0.45f),
+    accent = c,
+    widgetEdge = c.copy(alpha = 0.2f),
+)
+
 @Composable
-fun animatedPalette(night: Boolean): Palette {
-    val target = if (night) Night else Day
+fun animatedPalette(night: Boolean, dayColor: Int?, nightTone: Float): Palette {
+    val target = when {
+        night -> derive(nightColor(nightTone), NightBase)
+        dayColor != null -> derive(Color(dayColor), DayDefault)
+        else -> DayDefault
+    }
     val primary by animateColorAsState(target.primary, colorAnim, label = "primary")
     val secondary by animateColorAsState(target.secondary, colorAnim, label = "secondary")
     val tertiary by animateColorAsState(target.tertiary, colorAnim, label = "tertiary")

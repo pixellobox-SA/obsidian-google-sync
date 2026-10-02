@@ -47,7 +47,7 @@ import app.standbyclock.data.ClockSettings
  * (right). Pages that aren't on screen aren't drawn. Screen brightness is never touched.
  */
 @Composable
-fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit) {
+fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit, onOpenClock: () -> Unit) {
     val context = LocalContext.current
     val now by rememberMinuteClock()
     val weather by rememberWeather()
@@ -56,7 +56,7 @@ fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit) {
     var nightOverride by remember { mutableStateOf<Boolean?>(null) }
     val scheduledNight = settings.nightMode && isNightHour(now.hour, settings.nightStartHour, settings.nightEndHour)
     val night = nightOverride ?: scheduledNight
-    val palette = animatedPalette(night)
+    val palette = animatedPalette(night, settings.dayColor, settings.nightTone)
 
     var todos by remember { mutableStateOf(Todos.load(context)) }
     val shortcuts = remember { Shortcuts.load(context) }
@@ -89,7 +89,7 @@ fun StandbyScreen(settings: ClockSettings, onLaunch: (Shortcut) -> Unit) {
                         todos = todos.toMutableList().also { it[i] = it[i].copy(done = !it[i].done) }
                         Todos.save(context, todos)
                     }
-                    1 -> MainPage(now, weather, settings, palette, night) { nightOverride = !night }
+                    1 -> MainPage(now, weather, settings, palette, night, onOpenClock) { nightOverride = !night }
                     else -> QuotePage(quote, shortcuts, palette, onLaunch)
                 }
             }

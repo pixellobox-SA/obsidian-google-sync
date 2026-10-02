@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -49,6 +53,7 @@ fun TodoEditor() {
     val context = LocalContext.current
     var todos by remember { mutableStateOf(Todos.load(context)) }
     var input by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
     fun update(list: List<Todo>) {
         todos = list
         Todos.save(context, list)
@@ -73,12 +78,15 @@ fun TodoEditor() {
             onValueChange = { input = it },
             label = { Text("New item") },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.width(8.dp))
         Button(enabled = input.isNotBlank(), onClick = {
             update(todos + Todo(input.trim()))
             input = ""
+            focusManager.clearFocus()
         }) { Text("Add") }
     }
     if (todos.any { it.done }) {

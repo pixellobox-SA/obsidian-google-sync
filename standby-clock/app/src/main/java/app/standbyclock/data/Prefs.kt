@@ -15,6 +15,11 @@ data class ClockSettings(
     val userName: String,
     val message: String,
     val backgroundColor: Int,
+    val showAnalog: Boolean,
+    /** The user's own text/hands/border colour, or null for the built-in white and gold. */
+    val dayColor: Int?,
+    /** Night colour on a scale from dark orange (0) through soft beige (0.5) to white (1). */
+    val nightTone: Float,
 )
 
 /** Tiny wrapper around SharedPreferences. Everything stays on the phone. */
@@ -56,6 +61,18 @@ class Prefs(context: Context) {
     var backgroundColor: Int
         get() = sp.getInt(KEY_BG_COLOR, 0xFF0E1A2B.toInt())
         set(v) = sp.edit().putInt(KEY_BG_COLOR, v).apply()
+
+    var showAnalog: Boolean
+        get() = sp.getBoolean(KEY_SHOW_ANALOG, true)
+        set(v) = sp.edit().putBoolean(KEY_SHOW_ANALOG, v).apply()
+
+    var dayColor: Int?
+        get() = if (sp.contains(KEY_DAY_COLOR)) sp.getInt(KEY_DAY_COLOR, -1) else null
+        set(v) = sp.edit().apply { if (v == null) remove(KEY_DAY_COLOR) else putInt(KEY_DAY_COLOR, v) }.apply()
+
+    var nightTone: Float
+        get() = sp.getFloat(KEY_NIGHT_TONE, 0.5f)
+        set(v) = sp.edit().putFloat(KEY_NIGHT_TONE, v.coerceIn(0f, 1f)).apply()
 
     /** Shown in the greeting above the time. */
     var userName: String
@@ -113,6 +130,9 @@ class Prefs(context: Context) {
         userName = userName,
         message = message,
         backgroundColor = backgroundColor,
+        showAnalog = showAnalog,
+        dayColor = dayColor,
+        nightTone = nightTone,
     )
 
     private fun readPlace(prefix: String): Place? {
@@ -145,6 +165,9 @@ class Prefs(context: Context) {
         const val KEY_AUTO_START = "auto_start"
         const val KEY_BACKGROUND = "background"
         const val KEY_BG_COLOR = "background_color"
+        const val KEY_SHOW_ANALOG = "show_analog"
+        const val KEY_DAY_COLOR = "day_color"
+        const val KEY_NIGHT_TONE = "night_tone"
         const val KEY_NAME = "user_name"
         const val KEY_MESSAGE = "message"
         const val KEY_DND = "dnd"

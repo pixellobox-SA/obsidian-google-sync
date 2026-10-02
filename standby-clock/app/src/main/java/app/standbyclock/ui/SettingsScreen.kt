@@ -1,6 +1,15 @@
 package app.standbyclock.ui
 
 import android.Manifest
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Slider
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.RadioButton
@@ -82,6 +91,17 @@ fun SettingsScreen(
     var nightEnd by remember { mutableStateOf(prefs.nightEndHour) }
     var autoStart by remember { mutableStateOf(prefs.autoStart) }
     var background by remember { mutableStateOf(prefs.background) }
+    var showAnalog by remember { mutableStateOf(prefs.showAnalog) }
+    var customColor by remember { mutableStateOf(prefs.dayColor != null) }
+    var nightTone by remember { mutableStateOf(prefs.nightTone) }
+    val locationOn = remember(resumeTick) { LocationProvider.isLocationOn(context) }
+
+    // Never pop the keyboard up by itself: drop any leftover focus (e.g. in the city box)
+    // whenever the screen comes back, so Android doesn't restore it and scroll there.
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(resumeTick) { focusManager.clearFocus(force = true) }
+    val doneTyping = KeyboardActions(onDone = { focusManager.clearFocus() })
+    val doneKeys = KeyboardOptions(imeAction = ImeAction.Done)
     var userName by remember { mutableStateOf(prefs.userName) }
     var greeting by remember { mutableStateOf(prefs.message) }
     var dnd by remember { mutableStateOf(prefs.dnd) }
@@ -176,6 +196,8 @@ fun SettingsScreen(
                     onValueChange = { userName = it; prefs.userName = it },
                     label = { Text("Your name") },
                     singleLine = true,
+                    keyboardOptions = doneKeys,
+                    keyboardActions = doneTyping,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(8.dp))
@@ -185,6 +207,8 @@ fun SettingsScreen(
                     label = { Text("Message above the time (optional)") },
                     placeholder = { Text("Hello ${userName.ifBlank { "there" }}, time for work!") },
                     singleLine = true,
+                    keyboardOptions = doneKeys,
+                    keyboardActions = doneTyping,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
@@ -218,6 +242,32 @@ fun SettingsScreen(
 
             Section("Clock") {
                 SwitchRow("24-hour clock", checked = use24h) { use24h = it; prefs.use24h = it }
+                SwitchRow("Show analogue clock", checked = showAnalog) { showAnalog = it; prefs.showAnalog = it }
+                Text(
+                    "Tip: tap the time on the clock to open your phone's clock app.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF9C9CA3),
+                )
+            }
+
+            Section("Text and clock colour") {
+                SwitchRow("Use my own colour", checked = customColor) {
+                    customColor = it
+                    prefs.dayColor = if (it) (prefs.dayColor ?: 0xFFF5F5F7.toInt()) else null
+                }
+                Text(
+                    if (customColor) {
+                        "Text, clock hands, icons and borders all use this colour (except at night)."
+                    } else {
+                        "Using the default white with gold clock hands."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF9C9CA3),
+                )
+                if (customColor) {
+                    Spacer(Modifier.height(8.dp))
+                    ColorPicker(initial = prefs.dayColor ?: 0xFFF5F5F7.toInt(), onPicked = { prefs.dayColor = it })
+                }
             }
 
             Section("Background") {
@@ -265,6 +315,11 @@ fun SettingsScreen(
                             prefs.manualPlace = null; manualPlace = null; refreshWeather(force = true)
                         }) { Text("Use approximate location instead") }
                     }
+                    hasLocation && !locationOn -> Text(
+                        "Location is switched off on this phone. Turn it on in quick settings, or type a city below.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
                     hasLocation -> Text("Location: approximate (about 1 km)", style = MaterialTheme.typography.bodyMedium)
                     else -> Button(onClick = {
                         permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -278,6 +333,8 @@ fun SettingsScreen(
                         onValueChange = { cityInput = it },
                         label = { Text("Or type a city") },
                         singleLine = true,
+                    keyboardOptions = doneKeys,
+                    keyboardActions = doneTyping,
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -290,6 +347,7 @@ fun SettingsScreen(
                                 prefs.manualPlace = found
                                 manualPlace = found
                                 cityInput = ""
+                                focusManager.clearFocus()
                                 message = null
                                 refreshWeather(force = true)
                             }
@@ -300,10 +358,35 @@ fun SettingsScreen(
             }
 
             Section("Night mode") {
-                SwitchRow("Soft beige colours at night", checked = night) { night = it; prefs.nightMode = it }
+                SwitchRow("Switch to night colours at night", checked = night) { night = it; prefs.nightMode = it }
                 if (night) {
                     HourStepper("Starts at", nightStart) { nightStart = it.mod(24); prefs.nightStartHour = it }
                     HourStepper("Ends at", nightEnd) { nightEnd = it.mod(24); prefs.nightEndHour = it }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Night colour", Modifier.weight(1f))
+                    Box(
+                        Modifier
+                            .size(width = 56.dp, height = 28.dp)
+                            .background(nightColor(nightTone), RoundedCornerShape(8.dp)),
+                    )
+                }
+                Slider(
+                    value = nightTone,
+                    onValueChange = { nightTone = it },
+                    onValueChangeFinished = { prefs.nightTone = nightTone },
+                )
+                Row(Modifier.fillMaxWidth()) {
+                    Text("Orange", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = Color(0xFF9C9CA3))
+                    Text("Beige", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9C9CA3))
+                    Text(
+                        "White",
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF9C9CA3),
+                        textAlign = TextAlign.End,
+                    )
                 }
             }
 
